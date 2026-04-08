@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Peso do Desperdício - Agrinho 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .food-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .food-card.active {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .glow {
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .conn-status {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-5xl font-bold text-slate-800 mb-2">🌱 O Peso do Desperdício</h1>
+            <p class="text-slate-500 font-medium italic">Agro forte, futuro sustentável: equilíbrio entre produção e meio ambiente</p>
+            
+            <!-- Botão de Conexão USB -->
+            <div class="mt-6 flex flex-col items-center gap-2">
+                <button id="btn-conectar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all flex items-center gap-3 transform active:scale-95">
+                    <span>🔌</span> CONECTAR BALANÇA (USB)
+                </button>
+                <div id="status-serial" class="conn-status bg-slate-200 text-slate-600">
+                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    Sistema Pronto para Conectar
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Coluna de Seleção de Alimento -->
+            <div class="lg:col-span-1 space-y-4">
+                <h2 class="text-xl font-semibold text-slate-700 mb-4 text-center lg:text-left">Selecione o Alimento</h2>
+                <div id="food-selector" class="grid grid-cols-2 gap-3">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+            <!-- Coluna de Monitorização -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Display de Peso Principal -->
+                <div class="stat-card text-center border-t-8 border-green-500 glow">
+                    <span class="text-slate-500 uppercase tracking-widest text-sm font-bold">Peso Detectado em Tempo Real</span>
+                    <div class="flex items-center justify-center mt-2">
+                        <span id="peso-display" class="text-7xl font-black text-slate-800">0</span>
+                        <span class="text-3xl text-slate-400 font-light ml-2">g</span>
+                    </div>
+                    <p id="alimento-selecionado-txt" class="mt-2 text-green-600 font-medium">Selecione um item para calcular o impacto ambiental</p>
+                </div>
+
+                <!-- Resultados de Impacto -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="stat-card border-l-4 border-blue-400">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <span class="text-2xl">💧</span>
+                            <h3 class="text-slate-500 font-bold uppercase text-xs">Pegada Hídrica</h3>
+                        </div>
+                        <div class="text-3xl font-bold text-slate-800"><span id="agua-display">0</span> <small class="text-sm font-normal text-slate-400">Litros</small></div>
+                        <p class="text-xs text-slate-400 mt-2">Água consumida desde o plantio até à sua mesa.</p>
+                    </div>
+
+                    <div class="stat-card border-l-4 border-amber-400">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <span class="text-2xl">🌍</span>
+                            <h3 class="text-slate-500 font-bold uppercase text-xs">Uso do Solo</h3>
+                        </div>
+                        <div class="text-3xl font-bold text-slate-800"><span id="solo-display">0</span> <small class="text-sm font-normal text-slate-400">m²</small></div>
+                        <p class="text-xs text-slate-400 mt-2">Área de terra necessária para produzir este peso.</p>
+                    </div>
+                </div>
+
+                <!-- Alerta Social -->
+                <div id="social-alert" class="bg-slate-800 text-white p-6 rounded-2xl hidden transform transition-all">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-3xl">💡</span>
+                        <div>
+                            <p class="font-bold text-lg">Impacto Social:</p>
+                            <p id="alert-text" class="text-slate-300">Este desperdício equivale ao banho de 5 pessoas!</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 text-center text-slate-400 text-sm">
+            <p>Agrinho 2026 - Tecnologia e Sustentabilidade no Campo</p>
+        </footer>
+    </div>
+
+    <script>
+        // Dados de Impacto Ambiental por grama
+        const alimentos = {
+            carne: { nome: "Carne Bovina", icon: "🥩", agua: 15.4, solo: 0.027 },
+            arroz: { nome: "Arroz", icon: "🍚", agua: 2.5, solo: 0.0015 },
+            macarrao: { nome: "Macarrão", icon: "🍝", agua: 1.8, solo: 0.0012 },
+            polenta: { nome: "Polenta", icon: "🌽", agua: 1.2, solo: 0.0008 },
+            fruta: { nome: "Frutas", icon: "🍎", agua: 0.9, solo: 0.0007 }
+        };
+
+        let alimentoAtual = null;
+        let pesoReal = 0;
+        let port = null;
+
+        // Renderizar seletores de alimentos
+        const selector = document.getElementById('food-selector');
+        Object.keys(alimentos).forEach(id => {
+            const item = alimentos[id];
+            const div = document.createElement('div');
+            div.className = `food-card bg-white p-4 rounded-xl border-2 border-slate-100 text-center`;
+            div.innerHTML = `
+                <div class="text-2xl mb-1">${item.icon}</div>
+                <div class="text-xs font-bold text-slate-700">${item.nome}</div>
+            `;
+            div.onclick = () => selecionarAlimento(id, div);
+            selector.appendChild(div);
+        });
+
+        function selecionarAlimento(id, elemento) {
+            document.querySelectorAll('.food-card').forEach(c => c.classList.remove('active'));
+            elemento.classList.add('active');
+            alimentoAtual = alimentos[id];
+            document.getElementById('alimento-selecionado-txt').innerText = `Cálculo baseado em: ${alimentoAtual.nome}`;
+            calcularImpacto();
+        }
+
+        function calcularImpacto() {
+            if (!alimentoAtual) return;
+
+            const totalAgua = (pesoReal * alimentoAtual.agua).toFixed(1);
+            const totalSolo = (pesoReal * alimentoAtual.solo).toFixed(3);
+
+            document.getElementById('peso-display').innerText = pesoReal;
+            document.getElementById('agua-display').innerText = totalAgua;
+            document.getElementById('solo-display').innerText = totalSolo;
+
+            const alertBox = document.getElementById('social-alert');
+            const banhos = Math.floor(totalAgua / 20);
+
+            if (pesoReal > 50) {
+                alertBox.classList.remove('hidden');
+                document.getElementById('alert-text').innerText = `Este desperdício daria para fornecer ${banhos} banhos de 5 minutos!`;
+            } else {
+                alertBox.classList.add('hidden');
+            }
+        }
+
+        // --- LÓGICA DE CONEXÃO USB ---
+        const btnConectar = document.getElementById('btn-conectar');
+        const statusSerial = document.getElementById('status-serial');
+
+        // Função para atualizar o status visual
+        function atualizarStatus(msg, tipo) {
+            if (tipo === 'sucesso') {
+                statusSerial.className = "conn-status bg-green-100 text-green-700";
+                statusSerial.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> ${msg}`;
+            } else if (tipo === 'erro') {
+                statusSerial.className = "conn-status bg-red-100 text-red-600 font-bold";
+                statusSerial.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> ${msg}`;
+            } else {
+                statusSerial.className = "conn-status bg-blue-100 text-blue-700";
+                statusSerial.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500"></span> ${msg}`;
+            }
+        }
+
+        async function conectarSerial() {
+            atualizarStatus("Abrindo janela de seleção...", "processo");
+            
+            if (!navigator.serial) {
+                alert('Este navegador não suporta Web Serial ou você não está usando HTTPS.');
+                atualizarStatus("Navegador incompatível", "erro");
+                return;
+            }
+
+            try {
+                // Tenta solicitar a porta - isso DEVE abrir o popup do Chrome
+                port = await navigator.serial.requestPort();
+                
+                await port.open({ baudRate: 9600 });
+                
+                atualizarStatus("Conectado com sucesso!", "sucesso");
+                btnConectar.innerText = "✅ CONECTADO";
+                btnConectar.className = "bg-green-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all flex items-center gap-3 opacity-80 cursor-default";
+                btnConectar.onclick = null; // Desativa cliques extras
+
+                lerDados();
+            } catch (err) {
+                console.error('Erro detalhado:', err);
+                
+                if (err.name === 'NotFoundError') {
+                    atualizarStatus("Nenhum dispositivo selecionado", "erro");
+                } else if (err.name === 'SecurityError') {
+                    atualizarStatus("Bloqueado pelo Google Sites", "erro");
+                    alert("O Google Sites bloqueou a conexão. Tente publicar o site e abrir o link direto no Chrome.");
+                } else {
+                    atualizarStatus("Erro: " + err.message, "erro");
+                }
+                
+                port = null;
+            }
+        }
+
+        async function lerDados() {
+            const decoder = new TextDecoder();
+            while (port && port.readable) {
+                const reader = port.readable.getReader();
+                let buffer = "";
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        
+                        if (buffer.includes('\n')) {
+                            const partes = buffer.split('\n');
+                            const dadoLido = partes[partes.length - 2].trim();
+                            const valorLimpado = dadoLido.replace(/[^0-9.]/g, '');
+                            const valorNum = parseFloat(valorLimpado);
+                            
+                            if (!isNaN(valorNum)) {
+                                pesoReal = Math.max(0, Math.floor(valorNum));
+                                calcularImpacto();
+                            }
+                            buffer = partes[partes.length - 1];
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erro na leitura:', error);
+                    atualizarStatus("Conexão perdida", "erro");
+                    break;
+                } finally {
+                    reader.releaseLock();
+                }
+            }
+        }
+
+        // Event listener explícito
+        btnConectar.addEventListener('click', conectarSerial);
+
+    </script>
+</body>
+</html>
