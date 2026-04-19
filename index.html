@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O Peso do Desperdício - Agrinho 2026</title>
+    <title>O Peso do Desperdício - Agrinho 2026 - v1.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -14,241 +14,393 @@
         }
 
         .food-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
             cursor: pointer;
+            border: 2px solid transparent;
         }
 
-        .food-card.active {
+        .food-card.selected {
             border-color: #22c55e;
             background-color: #f0fdf4;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+        }
+
+        .food-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(0.8);
         }
 
         .stat-card {
             background: white;
             border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
-        .glow {
-            animation: pulse-green 2s infinite;
+        .plate-container {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin: 0 auto;
         }
 
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        .plate-base {
+            fill: #ffffff;
+            stroke: #e2e8f0;
+            stroke-width: 2;
         }
 
-        .conn-status {
-            font-size: 0.75rem;
-            padding: 4px 12px;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .version-badge {
+            font-size: 0.65rem;
+            background: #22c55e;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 99px;
+            font-weight: bold;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+            accent-color: #22c55e;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #22c55e;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .plate-slice {
+            transition: d 0.1s linear;
+        }
+
+        .btn-reset {
+            transition: all 0.2s;
+        }
+        .btn-reset:hover {
+            background-color: #fee2e2;
+            color: #ef4444;
+            border-color: #fecaca;
+        }
+
+        #food-selector {
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        #food-selector::-webkit-scrollbar {
+            width: 4px;
+        }
+        #food-selector::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto">
-        <!-- Header -->
-        <header class="text-center mb-10">
+    <div class="max-w-6xl mx-auto">
+        <header class="text-center mb-8">
+            <div class="flex justify-center mb-2">
+                <span class="version-badge shadow-sm">v1.4 - Painel Agrinho Atualizado</span>
+            </div>
             <h1 class="text-3xl md:text-5xl font-bold text-slate-800 mb-2">🌱 O Peso do Desperdício</h1>
-            <p class="text-slate-500 font-medium italic">Agro forte, futuro sustentável: equilíbrio entre produção e meio ambiente</p>
+            <p class="text-slate-500 font-medium italic">Simulador de Impacto Ambiental em Tempo Real</p>
             
-            <!-- Botão de Conexão USB -->
-            <div class="mt-6 flex flex-col items-center gap-2">
-                <button id="btn-conectar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all flex items-center gap-3 transform active:scale-95">
+            <div class="mt-4 flex flex-col items-center gap-2">
+                <button id="btn-conectar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all flex items-center gap-2">
                     <span>🔌</span> CONECTAR BALANÇA (USB)
                 </button>
-                <div id="status-serial" class="conn-status bg-slate-200 text-slate-600">
-                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                    Sistema Pronto para Conectar
+                <div id="status-serial" class="conn-status text-xs text-slate-500 font-bold uppercase">
+                    Aguardando conexão Serial...
                 </div>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Coluna de Seleção de Alimento -->
-            <div class="lg:col-span-1 space-y-4">
-                <h2 class="text-xl font-semibold text-slate-700 mb-4 text-center lg:text-left">Selecione o Alimento</h2>
-                <div id="food-selector" class="grid grid-cols-2 gap-3">
-                    <!-- Gerado via JS -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Coluna Esquerda: Itens e Proporções -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="stat-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-slate-700">🍱 1. Alimentos</h2>
+                        <button onclick="resetPainel()" class="btn-reset text-[10px] font-black uppercase px-2 py-1.5 rounded-lg bg-slate-100 text-slate-500 border border-slate-200">
+                            🔄 Limpar
+                        </button>
+                    </div>
+                    <div id="food-selector" class="grid grid-cols-2 gap-2"></div>
+                </div>
+
+                <div id="proportions-container" class="stat-card hidden">
+                    <h2 class="text-lg font-bold text-slate-700 mb-2">⚖️ 2. Proporções</h2>
+                    <div id="sliders-list" class="space-y-4"></div>
+                    <div class="mt-6 p-3 rounded-xl border-2 border-dashed border-slate-200 text-center">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Total do Prato</div>
+                        <div id="total-pct-display" class="text-2xl font-black text-green-600">0.0%</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Coluna de Monitorização -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- Display de Peso Principal -->
-                <div class="stat-card text-center border-t-8 border-green-500 glow">
-                    <span class="text-slate-500 uppercase tracking-widest text-sm font-bold">Peso Detectado em Tempo Real</span>
-                    <div class="flex items-center justify-center mt-2">
-                        <span id="peso-display" class="text-7xl font-black text-slate-800">0</span>
-                        <span class="text-3xl text-slate-400 font-light ml-2">g</span>
-                    </div>
-                    <p id="alimento-selecionado-txt" class="mt-2 text-green-600 font-medium">Selecione um item para calcular o impacto ambiental</p>
-                </div>
-
-                <!-- Resultados de Impacto -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="stat-card border-l-4 border-blue-400">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <span class="text-2xl">💧</span>
-                            <h3 class="text-slate-500 font-bold uppercase text-xs">Pegada Hídrica</h3>
-                        </div>
-                        <div class="text-3xl font-bold text-slate-800"><span id="agua-display">0</span> <small class="text-sm font-normal text-slate-400">Litros</small></div>
-                        <p class="text-xs text-slate-400 mt-2">Água consumida desde o plantio até à sua mesa.</p>
-                    </div>
-
-                    <div class="stat-card border-l-4 border-amber-400">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <span class="text-2xl">🌍</span>
-                            <h3 class="text-slate-500 font-bold uppercase text-xs">Uso do Solo</h3>
-                        </div>
-                        <div class="text-3xl font-bold text-slate-800"><span id="solo-display">0</span> <small class="text-sm font-normal text-slate-400">m²</small></div>
-                        <p class="text-xs text-slate-400 mt-2">Área de terra necessária para produzir este peso.</p>
-                    </div>
-                </div>
-
-                <!-- Alerta Social -->
-                <div id="social-alert" class="bg-slate-800 text-white p-6 rounded-2xl hidden transform transition-all">
-                    <div class="flex items-center space-x-4">
-                        <span class="text-3xl">💡</span>
-                        <div>
-                            <p class="font-bold text-lg">Impacto Social:</p>
-                            <p id="alert-text" class="text-slate-300">Este desperdício equivale ao banho de 5 pessoas!</p>
+            <!-- Coluna Central: O Prato Visual -->
+            <div class="lg:col-span-4 flex flex-col items-center justify-start py-4">
+                <div class="plate-container">
+                    <svg id="plate-svg" viewBox="0 0 100 100" class="w-full h-full transform -rotate-90">
+                        <circle cx="50" cy="50" r="49" fill="#f1f5f9" />
+                        <circle cx="50" cy="50" r="46" class="plate-base" />
+                        <g id="pizza-slices"></g>
+                        <circle cx="50" cy="50" r="46" fill="none" stroke="#cbd5e1" stroke-width="0.5" />
+                    </svg>
+                    
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="text-center bg-white shadow-xl rounded-full w-28 h-28 flex flex-col items-center justify-center border-4 border-slate-50">
+                            <span id="peso-display" class="text-3xl font-black text-slate-800 leading-none">0</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Gramas</span>
                         </div>
                     </div>
                 </div>
+                <div class="mt-8 flex flex-wrap justify-center gap-2 max-w-sm" id="plate-legend"></div>
+            </div>
 
+            <!-- Coluna Direita: Impactos -->
+            <div class="lg:col-span-4 space-y-4">
+                <div class="stat-card border-l-8 border-blue-500">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-slate-400 font-bold uppercase text-[10px]">💧 Pegada Hídrica</h3>
+                        <span class="text-xl">🌊</span>
+                    </div>
+                    <div class="text-4xl font-bold text-slate-800"><span id="agua-display">0</span> <small class="text-lg font-normal text-slate-400">L</small></div>
+                    <div class="w-full bg-slate-100 h-1.5 mt-3 rounded-full overflow-hidden">
+                        <div id="bar-agua" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="stat-card border-l-8 border-amber-500">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-slate-400 font-bold uppercase text-[10px]">🌍 Uso de Solo</h3>
+                        <span class="text-xl">🌱</span>
+                    </div>
+                    <div class="text-4xl font-bold text-slate-800"><span id="solo-display">0</span> <small class="text-lg font-normal text-slate-400">m²</small></div>
+                    <div class="w-full bg-slate-100 h-1.5 mt-3 rounded-full overflow-hidden">
+                        <div id="bar-solo" class="bg-amber-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="social-alert" class="bg-slate-800 text-white p-5 rounded-2xl hidden shadow-lg transition-all">
+                    <div class="flex gap-3 items-start">
+                        <span class="text-2xl">💡</span>
+                        <p class="text-sm leading-tight" id="alert-text"></p>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <footer class="mt-12 pt-6 border-t border-slate-200 text-center text-slate-400 text-sm">
-            <p>Agrinho 2026 - Tecnologia e Sustentabilidade no Campo</p>
-        </footer>
     </div>
 
     <script>
-        // Dados de Impacto Ambiental por grama
-        const alimentos = {
-            carne: { nome: "Carne Bovina", icon: "🥩", agua: 15.4, solo: 0.027 },
-            arroz: { nome: "Arroz", icon: "🍚", agua: 2.5, solo: 0.0015 },
-            macarrao: { nome: "Macarrão", icon: "🍝", agua: 1.8, solo: 0.0012 },
-            polenta: { nome: "Polenta", icon: "🌽", agua: 1.2, solo: 0.0008 },
-            fruta: { nome: "Frutas", icon: "🍎", agua: 0.9, solo: 0.0007 }
+        const alimentosInfo = {
+            carne: { nome: "Carne", icon: "🥩", agua: 15.4, solo: 0.027, color: "#ef4444" },
+            arroz: { nome: "Arroz", icon: "🍚", agua: 2.5, solo: 0.0015, color: "#94a3b8" },
+            feijao: { 
+                nome: "Feijão", 
+                icon: `<svg viewBox="0 0 24 24" class="w-6 h-6" fill="#78350f"><path d="M12 2C8.69 2 6 4.69 6 8c0 1.5.54 2.87 1.44 3.93C5.54 13.12 4 15.38 4 18c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4 0-2.62-1.54-4.88-3.44-6.07.9-1.06 1.44-2.43 1.44-3.93 0-3.31-2.69-6-6-6zm-1 4h2v2h-2V6zm-2 4h6v2h-6v-2z"/></svg>`, 
+                agua: 4.2, 
+                solo: 0.0022, 
+                color: "#78350f" 
+            },
+            macarrao: { nome: "Massa", icon: "🍝", agua: 1.8, solo: 0.0012, color: "#eab308" },
+            salada_fruta: { nome: "Salada/Fruta", icon: "🥗", agua: 0.5, solo: 0.0008, color: "#22c55e" },
+            polenta: { nome: "Polenta", icon: "🌽", agua: 1.2, solo: 0.0011, color: "#facc15" },
+            batata: { nome: "Batata", icon: "🥔", agua: 0.3, solo: 0.0006, color: "#d97706" },
+            maionese: { nome: "Maionese", icon: "🥣", agua: 1.5, solo: 0.0009, color: "#fef3c7" },
+            iogurte: { nome: "Iogurte", icon: "🥛", agua: 6.0, solo: 0.0050, color: "#38bdf8" },
+            cereal_bolacha: { nome: "Cereal/Bolacha", icon: "🍪", agua: 1.1, solo: 0.0013, color: "#92400e" }
         };
 
-        let alimentoAtual = null;
+        let selecionados = {}; 
         let pesoReal = 0;
         let port = null;
 
-        // Renderizar seletores de alimentos
+        // Gerar botões de seleção
         const selector = document.getElementById('food-selector');
-        Object.keys(alimentos).forEach(id => {
-            const item = alimentos[id];
+        Object.keys(alimentosInfo).forEach(id => {
+            const item = alimentosInfo[id];
             const div = document.createElement('div');
-            div.className = `food-card bg-white p-4 rounded-xl border-2 border-slate-100 text-center`;
-            div.innerHTML = `
-                <div class="text-2xl mb-1">${item.icon}</div>
-                <div class="text-xs font-bold text-slate-700">${item.nome}</div>
-            `;
-            div.onclick = () => selecionarAlimento(id, div);
+            div.className = `food-card bg-white p-3 rounded-xl border-2 text-center shadow-sm flex flex-col items-center justify-center`;
+            div.id = `card-${id}`;
+            const iconContent = item.icon.startsWith('<svg') ? item.icon : `<span class="text-2xl">${item.icon}</span>`;
+            div.innerHTML = `<div class="mb-1">${iconContent}</div><div class="text-[10px] font-bold uppercase text-slate-600 leading-tight">${item.nome}</div>`;
+            div.onclick = () => toggleAlimento(id);
             selector.appendChild(div);
         });
 
-        function selecionarAlimento(id, elemento) {
-            document.querySelectorAll('.food-card').forEach(c => c.classList.remove('active'));
-            elemento.classList.add('active');
-            alimentoAtual = alimentos[id];
-            document.getElementById('alimento-selecionado-txt').innerText = `Cálculo baseado em: ${alimentoAtual.nome}`;
+        function toggleAlimento(id) {
+            const totalAtual = Object.values(selecionados).reduce((a, b) => a + b, 0);
+            if (selecionados[id] !== undefined) {
+                delete selecionados[id];
+                document.getElementById(`card-${id}`).classList.remove('selected');
+            } else {
+                const restante = 100 - totalAtual;
+                if (restante <= 0.1) return;
+                selecionados[id] = Math.min(10, restante); 
+                document.getElementById(`card-${id}`).classList.add('selected');
+            }
+            renderSliders();
+            atualizarVisual();
+        }
+
+        function renderSliders() {
+            const container = document.getElementById('proportions-container');
+            const list = document.getElementById('sliders-list');
+            const keys = Object.keys(selecionados);
+            const totalAtual = keys.reduce((acc, k) => acc + selecionados[k], 0);
+
+            if (keys.length === 0) {
+                container.classList.add('hidden');
+                Object.keys(alimentosInfo).forEach(id => document.getElementById(`card-${id}`).classList.remove('disabled'));
+                return;
+            }
+
+            container.classList.remove('hidden');
+            keys.forEach(id => {
+                let sliderWrap = document.getElementById(`wrap-${id}`);
+                const item = alimentosInfo[id];
+                const outrosTotal = totalAtual - selecionados[id];
+                const maxPermitido = 100 - outrosTotal;
+
+                if (!sliderWrap) {
+                    sliderWrap = document.createElement('div');
+                    sliderWrap.id = `wrap-${id}`;
+                    sliderWrap.className = "p-2 bg-slate-50 rounded-lg border border-slate-100";
+                    list.appendChild(sliderWrap);
+                }
+
+                sliderWrap.innerHTML = `
+                    <div class="flex justify-between text-[10px] font-black uppercase mb-1">
+                        <span class="text-slate-500">${item.nome}</span>
+                        <span style="color: ${item.color}">${selecionados[id].toFixed(1)}%</span>
+                    </div>
+                    <input type="range" min="0.1" max="${maxPermitido.toFixed(1)}" step="0.1" value="${selecionados[id]}" 
+                        oninput="updateProportion('${id}', this.value)">
+                `;
+            });
+
+            Array.from(list.children).forEach(child => {
+                const childId = child.id.replace('wrap-', '');
+                if (!selecionados[childId]) child.remove();
+            });
+
+            Object.keys(alimentosInfo).forEach(id => {
+                const card = document.getElementById(`card-${id}`);
+                card.classList.toggle('disabled', totalAtual >= 99.9 && !selecionados[id]);
+            });
+        }
+
+        function updateProportion(id, val) {
+            val = parseFloat(val);
+            const outros = Object.keys(selecionados).filter(k => k !== id).reduce((a, k) => a + selecionados[k], 0);
+            if (outros + val > 100) val = 100 - outros;
+            selecionados[id] = val;
+            renderSliders();
+            atualizarVisual();
+        }
+
+        function atualizarVisual() {
+            const slicesGroup = document.getElementById('pizza-slices');
+            const legend = document.getElementById('plate-legend');
+            slicesGroup.innerHTML = '';
+            legend.innerHTML = '';
+            
+            let totalPct = 0;
+            let cumulative = 0;
+
+            Object.keys(selecionados).forEach(id => {
+                const pct = selecionados[id];
+                const item = alimentosInfo[id];
+                if (pct > 0.1) {
+                    const start = cumulative;
+                    const end = cumulative + (pct / 100);
+                    const x1 = 50 + Math.cos(2 * Math.PI * start) * 46;
+                    const y1 = 50 + Math.sin(2 * Math.PI * start) * 46;
+                    const x2 = 50 + Math.cos(2 * Math.PI * end) * 46;
+                    const y2 = 50 + Math.sin(2 * Math.PI * end) * 46;
+                    const largeArc = pct / 100 > 0.5 ? 1 : 0;
+
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", `M 50 50 L ${x1} ${y1} A 46 46 0 ${largeArc} 1 ${x2} ${y2} Z`);
+                    path.setAttribute("fill", item.color);
+                    path.setAttribute("class", "plate-slice");
+                    slicesGroup.appendChild(path);
+                    
+                    cumulative = end;
+                    totalPct += pct;
+
+                    const leg = document.createElement('div');
+                    leg.className = "flex items-center gap-1.5 text-[9px] font-black uppercase px-2.5 py-1.5 rounded-full bg-white shadow-sm border border-slate-100";
+                    leg.innerHTML = `<span class="w-2 h-2 rounded-full" style="background:${item.color}"></span> ${item.nome}`;
+                    legend.appendChild(leg);
+                }
+            });
+
+            document.getElementById('total-pct-display').innerText = totalPct.toFixed(1) + "%";
             calcularImpacto();
         }
 
         function calcularImpacto() {
-            if (!alimentoAtual) return;
-
-            const totalAgua = (pesoReal * alimentoAtual.agua).toFixed(1);
-            const totalSolo = (pesoReal * alimentoAtual.solo).toFixed(3);
-
+            let totalAgua = 0;
+            let totalSolo = 0;
             document.getElementById('peso-display').innerText = pesoReal;
-            document.getElementById('agua-display').innerText = totalAgua;
-            document.getElementById('solo-display').innerText = totalSolo;
+
+            Object.keys(selecionados).forEach(id => {
+                const pesoParte = pesoReal * (selecionados[id] / 100);
+                totalAgua += pesoParte * alimentosInfo[id].agua;
+                totalSolo += pesoParte * alimentosInfo[id].solo;
+            });
+
+            document.getElementById('agua-display').innerText = Math.round(totalAgua);
+            document.getElementById('solo-display').innerText = totalSolo.toFixed(2);
+            document.getElementById('bar-agua').style.width = Math.min(100, (totalAgua / 1200) * 100) + "%";
+            document.getElementById('bar-solo').style.width = Math.min(100, (totalSolo / 4) * 100) + "%";
 
             const alertBox = document.getElementById('social-alert');
-            const banhos = Math.floor(totalAgua / 20);
-
-            if (pesoReal > 50) {
+            if (pesoReal > 50 && totalAgua > 1) {
                 alertBox.classList.remove('hidden');
-                document.getElementById('alert-text').innerText = `Este desperdício daria para fornecer ${banhos} banhos de 5 minutos!`;
+                document.getElementById('alert-text').innerHTML = `Este desperdício equivale a gastar <b>${(totalAgua/20).toFixed(1)} banhos</b> de 5 min!`;
             } else {
                 alertBox.classList.add('hidden');
             }
         }
 
-        // --- LÓGICA DE CONEXÃO USB ---
-        const btnConectar = document.getElementById('btn-conectar');
-        const statusSerial = document.getElementById('status-serial');
-
-        // Função para atualizar o status visual
-        function atualizarStatus(msg, tipo) {
-            if (tipo === 'sucesso') {
-                statusSerial.className = "conn-status bg-green-100 text-green-700";
-                statusSerial.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> ${msg}`;
-            } else if (tipo === 'erro') {
-                statusSerial.className = "conn-status bg-red-100 text-red-600 font-bold";
-                statusSerial.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> ${msg}`;
-            } else {
-                statusSerial.className = "conn-status bg-blue-100 text-blue-700";
-                statusSerial.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500"></span> ${msg}`;
-            }
+        function resetPainel() {
+            selecionados = {};
+            renderSliders();
+            atualizarVisual();
+            document.querySelectorAll('.food-card').forEach(c => c.classList.remove('selected', 'disabled'));
         }
 
-        async function conectarSerial() {
-            atualizarStatus("Abrindo janela de seleção...", "processo");
-            
-            if (!navigator.serial) {
-                alert('Este navegador não suporta Web Serial ou você não está usando HTTPS.');
-                atualizarStatus("Navegador incompatível", "erro");
-                return;
-            }
-
+        // Conexão USB Serial
+        document.getElementById('btn-conectar').onclick = async () => {
+            if (!navigator.serial) return alert("Use o Chrome ou Edge.");
             try {
-                // Tenta solicitar a porta - isso DEVE abrir o popup do Chrome
                 port = await navigator.serial.requestPort();
-                
                 await port.open({ baudRate: 9600 });
-                
-                atualizarStatus("Conectado com sucesso!", "sucesso");
-                btnConectar.innerText = "✅ CONECTADO";
-                btnConectar.className = "bg-green-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all flex items-center gap-3 opacity-80 cursor-default";
-                btnConectar.onclick = null; // Desativa cliques extras
+                document.getElementById('status-serial').innerText = "🟢 Conectado";
+                document.getElementById('btn-conectar').classList.add('hidden');
+                lerSerial();
+            } catch (e) { console.error(e); }
+        };
 
-                lerDados();
-            } catch (err) {
-                console.error('Erro detalhado:', err);
-                
-                if (err.name === 'NotFoundError') {
-                    atualizarStatus("Nenhum dispositivo selecionado", "erro");
-                } else if (err.name === 'SecurityError') {
-                    atualizarStatus("Bloqueado pelo Google Sites", "erro");
-                    alert("O Google Sites bloqueou a conexão. Tente publicar o site e abrir o link direto no Chrome.");
-                } else {
-                    atualizarStatus("Erro: " + err.message, "erro");
-                }
-                
-                port = null;
-            }
-        }
-
-        async function lerDados() {
+        async function lerSerial() {
             const decoder = new TextDecoder();
             while (port && port.readable) {
                 const reader = port.readable.getReader();
@@ -257,35 +409,20 @@
                     while (true) {
                         const { value, done } = await reader.read();
                         if (done) break;
-                        
-                        buffer += decoder.decode(value, { stream: true });
-                        
+                        buffer += decoder.decode(value);
                         if (buffer.includes('\n')) {
-                            const partes = buffer.split('\n');
-                            const dadoLido = partes[partes.length - 2].trim();
-                            const valorLimpado = dadoLido.replace(/[^0-9.]/g, '');
-                            const valorNum = parseFloat(valorLimpado);
-                            
-                            if (!isNaN(valorNum)) {
-                                pesoReal = Math.max(0, Math.floor(valorNum));
+                            const linhas = buffer.split('\n');
+                            const peso = linhas[linhas.length - 2].replace(/[^0-9.]/g, '');
+                            if (peso) {
+                                pesoReal = Math.floor(parseFloat(peso));
                                 calcularImpacto();
                             }
-                            buffer = partes[partes.length - 1];
+                            buffer = linhas[linhas.length - 1];
                         }
                     }
-                } catch (error) {
-                    console.error('Erro na leitura:', error);
-                    atualizarStatus("Conexão perdida", "erro");
-                    break;
-                } finally {
-                    reader.releaseLock();
-                }
+                } finally { reader.releaseLock(); }
             }
         }
-
-        // Event listener explícito
-        btnConectar.addEventListener('click', conectarSerial);
-
     </script>
 </body>
 </html>
