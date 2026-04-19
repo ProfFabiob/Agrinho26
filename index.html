@@ -231,7 +231,6 @@
         let pesoReal = 0;
         let port = null;
 
-        // Gerar botões de seleção
         const selector = document.getElementById('food-selector');
         Object.keys(alimentosInfo).forEach(id => {
             const item = alimentosInfo[id];
@@ -359,7 +358,7 @@
         function calcularImpacto() {
             let totalAgua = 0;
             let totalSolo = 0;
-            document.getElementById('peso-display').innerText = pesoReal;
+            document.getElementById('peso-display').innerText = Math.round(pesoReal);
 
             Object.keys(selecionados).forEach(id => {
                 const pesoParte = pesoReal * (selecionados[id] / 100);
@@ -388,39 +387,61 @@
             document.querySelectorAll('.food-card').forEach(c => c.classList.remove('selected', 'disabled'));
         }
 
-        // Conexão USB Serial
+        // --- MELHORIA NA CONEXÃO SERIAL ---
         document.getElementById('btn-conectar').onclick = async () => {
-            if (!navigator.serial) return alert("Use o Chrome ou Edge.");
+            if (!navigator.serial) return alert("Por favor, use o Google Chrome ou Microsoft Edge no computador.");
             try {
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 9600 });
-                document.getElementById('status-serial').innerText = "🟢 Conectado";
+                document.getElementById('status-serial').innerText = "🟢 Balança Ativa (Recebendo dados)";
+                document.getElementById('status-serial').classList.add('text-green-600');
                 document.getElementById('btn-conectar').classList.add('hidden');
                 lerSerial();
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('status-serial').innerText = "❌ Erro ao conectar. Tente novamente.";
+            }
         };
 
         async function lerSerial() {
             const decoder = new TextDecoder();
+            let buffer = "";
+
             while (port && port.readable) {
                 const reader = port.readable.getReader();
-                let buffer = "";
                 try {
                     while (true) {
                         const { value, done } = await reader.read();
                         if (done) break;
+                        
+                        // Adiciona novos dados ao buffer
                         buffer += decoder.decode(value);
+                        
+                        // Processa se houver uma quebra de linha
                         if (buffer.includes('\n')) {
                             const linhas = buffer.split('\n');
-                            const peso = linhas[linhas.length - 2].replace(/[^0-9.]/g, '');
-                            if (peso) {
-                                pesoReal = Math.floor(parseFloat(peso));
+                            // Pega a penúltima linha (a última completa antes do \n)
+                            let ultimaLinhaValida = linhas[linhas.length - 2].trim();
+                            
+                            // Limpa caracteres não numéricos (como \r ou espaços)
+                            const pesoLimpo = ultimaLinhaValida.replace(/[^0-9.]/g, '');
+                            
+                            if (pesoLimpo !== "" && !isNaN(pesoLimpo)) {
+                                pesoReal = parseFloat(pesoLimpo);
+                                // Debug visual opcional: console.log("Peso recebido:", pesoReal);
                                 calcularImpacto();
                             }
+                            
+                            // Mantém o resto no buffer
                             buffer = linhas[linhas.length - 1];
                         }
                     }
-                } finally { reader.releaseLock(); }
+                } catch (error) {
+                    console.error("Erro na leitura:", error);
+                    break;
+                } finally {
+                    reader.releaseLock();
+                }
             }
         }
     </script>
