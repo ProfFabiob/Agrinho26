@@ -2,236 +2,237 @@
 <html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O Peso do Desperdício - Agrinho 2026 - v1.7</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>O Peso do Desperdício - Agrinho 2026 - v1.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
         
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            font-family: 'Outfit', sans-serif;
+            background-color: #f0f4f8;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Estilo para parecer app de tablet */
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .food-card {
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            border: 2px solid transparent;
+            border: 3px solid transparent;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .food-card:active {
+            transform: scale(0.92);
         }
 
         .food-card.selected {
             border-color: #22c55e;
-            background-color: #f0fdf4;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+            background-color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.2);
+            transform: translateY(-4px);
         }
 
         .food-card.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            filter: grayscale(0.8);
+            opacity: 0.3;
+            filter: grayscale(1);
+            pointer-events: none;
         }
 
         .stat-card {
             background: white;
-            border-radius: 1rem;
-            padding: 1.2rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(255,255,255,0.8);
         }
 
         .plate-container {
             position: relative;
-            width: 320px;
-            height: 320px;
-            margin: 0 auto;
+            width: 340px;
+            height: 340px;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.1));
         }
 
-        .plate-base {
-            fill: #ffffff;
-            stroke: #e2e8f0;
-            stroke-width: 2;
-        }
-
-        .version-badge {
-            font-size: 0.65rem;
-            background: #22c55e;
-            color: white;
-            padding: 2px 10px;
-            border-radius: 99px;
-            font-weight: bold;
-        }
-
+        /* Melhoria visual dos sliders para toque */
         input[type=range] {
-            width: 100%;
-            height: 6px;
+            height: 12px;
+            border-radius: 99px;
             background: #e2e8f0;
-            border-radius: 5px;
-            outline: none;
-            -webkit-appearance: none;
-            accent-color: #22c55e;
+            appearance: none;
         }
 
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 28px;
+            height: 28px;
             background: #22c55e;
-            cursor: pointer;
             border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            border: 4px solid white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
         }
 
-        .plate-slice {
-            transition: d 0.1s linear;
+        .version-badge {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 99px;
+            font-weight: 800;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
         }
 
-        .btn-reset {
-            transition: all 0.2s;
-        }
-        .btn-reset:hover {
-            background-color: #fee2e2;
-            color: #ef4444;
-            border-color: #fecaca;
+        .pulse-conn {
+            animation: pulse 2s infinite;
         }
 
-        #food-selector {
-            max-height: 480px;
-            overflow-y: auto;
-            padding-right: 4px;
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
-        #food-selector::-webkit-scrollbar {
-            width: 4px;
-        }
-        #food-selector::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
+
+        #food-selector::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-6">
 
-    <div class="max-w-6xl mx-auto">
-        <header class="text-center mb-8">
-            <div class="flex justify-center mb-2">
-                <span class="version-badge shadow-sm">v1.7 - Edição Agrinho 2026</span>
+    <div class="app-container">
+        <!-- Cabeçalho Estilo Dashboard -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div class="text-center md:text-left">
+                <span class="version-badge uppercase mb-2 inline-block">Agrinho 2026 • v1.8</span>
+                <h1 class="text-4xl font-extrabold text-slate-800 tracking-tight">O Peso do <span class="text-green-600">Desperdício</span></h1>
             </div>
-            <h1 class="text-3xl md:text-5xl font-bold text-slate-800 mb-2">🌱 O Peso do Desperdício</h1>
-            <p class="text-slate-500 font-medium italic">Simulador de Impacto Ambiental em Tempo Real</p>
             
-            <div class="mt-4 flex flex-col items-center gap-2">
-                <div class="flex items-center justify-center gap-3">
-                    <button id="btn-conectar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition-all flex items-center gap-2">
-                        <span>🔌</span> CONECTAR BALANÇA
+            <div class="flex flex-col items-center gap-2">
+                <div class="flex gap-2">
+                    <button id="btn-conectar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition-all flex items-center gap-3 active:scale-95">
+                        <span class="text-xl">🔌</span> CONECTAR
                     </button>
-                    
-                    <button id="btn-tara" class="hidden bg-slate-800 hover:bg-black text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition-all flex items-center gap-2 border-2 border-slate-700">
-                        <span>⚖️</span> TARA (ZERAR)
+                    <button id="btn-tara" class="hidden bg-slate-800 hover:bg-black text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition-all flex items-center gap-3 active:scale-95">
+                        <span class="text-xl">⚖️</span> ZERAR
                     </button>
                 </div>
-
-                <div id="status-serial" class="conn-status text-[10px] text-slate-400 font-black uppercase tracking-wider mt-1">
-                    Aguardando conexão via USB...
+                <div id="status-serial" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-slate-300"></span> Aguardando USB
                 </div>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Alimentos -->
-            <div class="lg:col-span-4 space-y-6">
-                <div class="stat-card">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-slate-700">🍱 1. Alimentos</h2>
-                        <button onclick="resetPainel()" class="btn-reset text-[10px] font-black uppercase px-2 py-1.5 rounded-lg bg-slate-100 text-slate-500 border border-slate-200">
-                            🔄 Limpar
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+            
+            <!-- Menu de Alimentos - Lateral Esquerda -->
+            <div class="lg:col-span-3 space-y-4">
+                <div class="stat-card h-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-extrabold text-slate-800">1. Alimentos</h2>
+                        <button onclick="resetPainel()" class="p-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                         </button>
                     </div>
-                    <div id="food-selector" class="grid grid-cols-2 gap-2"></div>
-                </div>
-
-                <div id="proportions-container" class="stat-card hidden">
-                    <h2 class="text-lg font-bold text-slate-700 mb-2">⚖️ 2. Proporções</h2>
-                    <div id="sliders-list" class="space-y-4"></div>
-                    <div class="mt-6 p-3 rounded-xl border-2 border-dashed border-slate-200 text-center">
-                        <div class="text-[10px] text-slate-400 uppercase font-bold">Total do Prato</div>
-                        <div id="total-pct-display" class="text-2xl font-black text-green-600">0.0%</div>
+                    <div id="food-selector" class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                        <!-- Alimentos inseridos via JS -->
                     </div>
                 </div>
             </div>
 
-            <!-- Visual do Prato -->
-            <div class="lg:col-span-4 flex flex-col items-center justify-start py-4">
+            <!-- Centro: Visualização Principal -->
+            <div class="lg:col-span-6 flex flex-col items-center justify-center space-y-8">
+                
+                <!-- Display de Peso Gigante -->
+                <div class="bg-white px-10 py-4 rounded-3xl shadow-xl border-b-4 border-green-500 text-center">
+                    <div class="text-[12px] font-black text-slate-400 uppercase tracking-tighter">Peso no Prato</div>
+                    <div class="flex items-baseline justify-center">
+                        <span id="peso-display" class="text-7xl font-black text-slate-800 tabular-nums">0</span>
+                        <span class="text-2xl font-bold text-slate-400 ml-2">g</span>
+                    </div>
+                </div>
+
                 <div class="plate-container">
                     <svg id="plate-svg" viewBox="0 0 100 100" class="w-full h-full transform -rotate-90">
-                        <circle cx="50" cy="50" r="49" fill="#f1f5f9" />
-                        <circle cx="50" cy="50" r="46" class="plate-base" />
+                        <circle cx="50" cy="50" r="48" fill="#e2e8f0" opacity="0.3" />
+                        <circle cx="50" cy="50" r="46" class="plate-base" fill="white" stroke="#e2e8f0" stroke-width="1" />
                         <g id="pizza-slices"></g>
-                        <circle cx="50" cy="50" r="46" fill="none" stroke="#cbd5e1" stroke-width="0.5" />
                     </svg>
                     
+                    <!-- Centro do Prato Vazio ou com ícone -->
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="text-center bg-white shadow-xl rounded-full w-28 h-28 flex flex-col items-center justify-center border-4 border-slate-50">
-                            <span id="peso-display" class="text-3xl font-black text-slate-800 leading-none">0</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Gramas</span>
+                        <div class="w-20 h-20 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-inner">
+                            <span class="text-3xl">🍽️</span>
                         </div>
                     </div>
                 </div>
-                <div class="mt-8 flex flex-wrap justify-center gap-2 max-w-sm" id="plate-legend"></div>
+
+                <div id="plate-legend" class="flex flex-wrap justify-center gap-2 px-4"></div>
             </div>
 
-            <!-- Impactos Ambientais -->
-            <div class="lg:col-span-4 space-y-4">
-                <div class="stat-card border-l-8 border-blue-500">
-                    <div class="flex items-center justify-between mb-1">
-                        <h3 class="text-slate-400 font-bold uppercase text-[10px]">💧 Pegada Hídrica</h3>
-                        <span class="text-xl">🌊</span>
-                    </div>
-                    <div class="text-4xl font-bold text-slate-800"><span id="agua-display">0</span> <small class="text-lg font-normal text-slate-400">L</small></div>
-                    <div class="w-full bg-slate-100 h-1.5 mt-3 rounded-full overflow-hidden">
-                        <div id="bar-agua" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
+            <!-- Direita: Proporções e Impacto -->
+            <div class="lg:col-span-3 space-y-4">
+                
+                <!-- Controle de Proporções -->
+                <div id="proportions-container" class="stat-card hidden border-t-4 border-green-500">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <span>⚖️</span> Ajustar Porções
+                    </h2>
+                    <div id="sliders-list" class="space-y-6"></div>
                 </div>
 
-                <div class="stat-card border-l-8 border-amber-500">
-                    <div class="flex items-center justify-between mb-1">
-                        <h3 class="text-slate-400 font-bold uppercase text-[10px]">🌍 Uso de Solo</h3>
-                        <span class="text-xl">🌱</span>
+                <!-- Cards de Impacto -->
+                <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-700 text-white">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-black uppercase opacity-80">Pegada Hídrica</span>
+                        <span class="text-2xl">💧</span>
                     </div>
-                    <div class="text-4xl font-bold text-slate-800"><span id="solo-display">0</span> <small class="text-lg font-normal text-slate-400">m²</small></div>
-                    <div class="w-full bg-slate-100 h-1.5 mt-3 rounded-full overflow-hidden">
-                        <div id="bar-solo" class="bg-amber-500 h-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
+                    <div class="text-4xl font-black"><span id="agua-display">0</span><small class="text-lg font-medium opacity-70 ml-1">L</small></div>
+                    <p class="text-[10px] mt-2 opacity-80 font-medium">Equivale a <span id="banhos-count" class="font-bold">0</span> banhos de 5 min.</p>
                 </div>
 
-                <div id="social-alert" class="bg-slate-800 text-white p-5 rounded-2xl hidden shadow-lg transition-all">
-                    <div class="flex gap-3 items-start">
-                        <span class="text-2xl">💡</span>
-                        <p class="text-sm leading-tight" id="alert-text"></p>
+                <div class="stat-card bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-black uppercase opacity-80">Uso de Terra</span>
+                        <span class="text-2xl">🌍</span>
                     </div>
+                    <div class="text-4xl font-black"><span id="solo-display">0</span><small class="text-lg font-medium opacity-70 ml-1">m²</small></div>
                 </div>
             </div>
+        </main>
+    </div>
+
+    <!-- Modais e Erros -->
+    <div id="error-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+            <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">⚠️</div>
+            <h3 class="text-2xl font-black text-slate-800 mb-2">Ops! Precisamos de um USB</h3>
+            <p id="error-message" class="text-slate-500 mb-8">Para ler o peso real da balança, abra este sistema em um computador usando o Chrome.</p>
+            <button onclick="document.getElementById('error-modal').classList.add('hidden')" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">OK, ENTENDI</button>
         </div>
     </div>
 
     <script>
         const alimentosInfo = {
             carne: { nome: "Carne", icon: "🥩", agua: 15.4, solo: 0.027, color: "#ef4444" },
-            arroz: { nome: "Arroz", icon: "🍚", agua: 2.5, solo: 0.0015, color: "#94a3b8" },
-            feijao: { 
-                nome: "Feijão", 
-                icon: `<svg viewBox="0 0 24 24" class="w-6 h-6" fill="#78350f"><path d="M12 2C8.69 2 6 4.69 6 8c0 1.5.54 2.87 1.44 3.93C5.54 13.12 4 15.38 4 18c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4 0-2.62-1.54-4.88-3.44-6.07.9-1.06 1.44-2.43 1.44-3.93 0-3.31-2.69-6-6-6zm-1 4h2v2h-2V6zm-2 4h6v2h-6v-2z"/></svg>`, 
-                agua: 4.2, 
-                solo: 0.0022, 
-                color: "#78350f" 
-            },
-            macarrao: { nome: "Massa", icon: "🍝", agua: 1.8, solo: 0.0012, color: "#eab308" },
-            salada_fruta: { nome: "Salada/Fruta", icon: "🥗", agua: 0.5, solo: 0.0008, color: "#22c55e" },
-            polenta: { nome: "Polenta", icon: "🌽", agua: 1.2, solo: 0.0011, color: "#facc15" },
-            batata: { nome: "Batata", icon: "🥔", agua: 0.3, solo: 0.0006, color: "#d97706" },
+            arroz: { nome: "Arroz", icon: "🍚", agua: 2.5, solo: 0.0015, color: "#cbd5e1" },
+            feijao: { nome: "Feijão", icon: "🫘", agua: 4.2, solo: 0.0022, color: "#78350f" },
+            massa: { nome: "Massa", icon: "🍝", agua: 1.8, solo: 0.0012, color: "#eab308" },
+            salada: { nome: "Salada", icon: "🥗", agua: 0.5, solo: 0.0008, color: "#22c55e" },
+            batata: { nome: "Batata", icon: "🥔", agua: 0.3, solo: 0.0006, color: "#fbbf24" },
             maionese: { nome: "Maionese", icon: "🥣", agua: 1.5, solo: 0.0009, color: "#fef3c7" },
-            iogurte: { nome: "Iogurte", icon: "🥛", agua: 6.0, solo: 0.0050, color: "#38bdf8" },
-            cereal_bolacha: { nome: "Cereal/Bolacha", icon: "🍪", agua: 1.1, solo: 0.0013, color: "#92400e" }
+            iogurte: { nome: "Iogurte", icon: "🥛", agua: 6.0, solo: 0.0050, color: "#38bdf8" }
         };
 
         let selecionados = {}; 
@@ -239,33 +240,42 @@
         let port = null;
         let writer = null;
 
-        // v1.7: AJUSTE DE CALIBRAGEM VIA SOFTWARE
-        // Se a balança marca a METADE do peso real, usamos o multiplicador 2.0
+        // Configurações de Calibragem
         const MULTIPLICADOR_CORRECAO = 2.0; 
-        const TOLERANCIA_GRAMAS = 5; 
-        const OFFSET_CORRECAO = 0;
+        const TOLERANCIA_GRAMAS = 3; 
 
+        // Gerar Cards de Alimentos
         const selector = document.getElementById('food-selector');
         Object.keys(alimentosInfo).forEach(id => {
             const item = alimentosInfo[id];
             const div = document.createElement('div');
-            div.className = `food-card bg-white p-3 rounded-xl border-2 text-center shadow-sm flex flex-col items-center justify-center`;
+            div.className = `food-card bg-white p-4 rounded-2xl shadow-sm flex items-center gap-3`;
             div.id = `card-${id}`;
-            const iconContent = item.icon.startsWith('<svg') ? item.icon : `<span class="text-2xl">${item.icon}</span>`;
-            div.innerHTML = `<div class="mb-1">${iconContent}</div><div class="text-[10px] font-bold uppercase text-slate-600 leading-tight">${item.nome}</div>`;
+            div.innerHTML = `
+                <div class="text-3xl">${item.icon}</div>
+                <div class="text-left">
+                    <div class="text-[11px] font-black uppercase text-slate-800">${item.nome}</div>
+                    <div class="text-[9px] text-slate-400 font-bold uppercase">Selecionar</div>
+                </div>
+            `;
             div.onclick = () => toggleAlimento(id);
             selector.appendChild(div);
         });
 
+        function showMessage(text) {
+            document.getElementById('error-message').innerText = text;
+            document.getElementById('error-modal').classList.remove('hidden');
+        }
+
         function toggleAlimento(id) {
-            const totalAtual = Object.values(selecionados).reduce((a, b) => a + b, 0);
             if (selecionados[id] !== undefined) {
                 delete selecionados[id];
                 document.getElementById(`card-${id}`).classList.remove('selected');
             } else {
+                const totalAtual = Object.values(selecionados).reduce((a, b) => a + b, 0);
                 const restante = 100 - totalAtual;
-                if (restante <= 0.1) return;
-                selecionados[id] = Math.min(10, restante); 
+                if (restante <= 1) return;
+                selecionados[id] = Math.min(25, restante); 
                 document.getElementById(`card-${id}`).classList.add('selected');
             }
             renderSliders();
@@ -280,7 +290,6 @@
 
             if (keys.length === 0) {
                 container.classList.add('hidden');
-                Object.keys(alimentosInfo).forEach(id => document.getElementById(`card-${id}`).classList.remove('disabled'));
                 return;
             }
 
@@ -294,37 +303,30 @@
                 if (!sliderWrap) {
                     sliderWrap = document.createElement('div');
                     sliderWrap.id = `wrap-${id}`;
-                    sliderWrap.className = "p-2 bg-slate-50 rounded-lg border border-slate-100";
+                    sliderWrap.className = "space-y-2";
                     list.appendChild(sliderWrap);
                 }
 
                 sliderWrap.innerHTML = `
-                    <div class="flex justify-between text-[10px] font-black uppercase mb-1">
+                    <div class="flex justify-between text-[11px] font-black uppercase">
                         <span class="text-slate-500">${item.nome}</span>
-                        <span style="color: ${item.color}">${selecionados[id].toFixed(1)}%</span>
+                        <span class="text-green-600">${selecionados[id].toFixed(0)}%</span>
                     </div>
-                    <input type="range" min="0.1" max="${maxPermitido.toFixed(1)}" step="0.1" value="${selecionados[id]}" 
-                        oninput="updateProportion('${id}', this.value)">
+                    <input type="range" min="1" max="${maxPermitido}" step="1" value="${selecionados[id]}" 
+                        class="w-full" oninput="updateProportion('${id}', this.value)">
                 `;
             });
 
+            // Remover sliders de itens desmarcados
             Array.from(list.children).forEach(child => {
                 const childId = child.id.replace('wrap-', '');
                 if (!selecionados[childId]) child.remove();
             });
-
-            Object.keys(alimentosInfo).forEach(id => {
-                const card = document.getElementById(`card-${id}`);
-                card.classList.toggle('disabled', totalAtual >= 99.9 && !selecionados[id]);
-            });
         }
 
         function updateProportion(id, val) {
-            val = parseFloat(val);
-            const outros = Object.keys(selecionados).filter(k => k !== id).reduce((a, k) => a + selecionados[k], 0);
-            if (outros + val > 100) val = 100 - outros;
+            val = parseInt(val);
             selecionados[id] = val;
-            renderSliders();
             atualizarVisual();
         }
 
@@ -334,38 +336,35 @@
             slicesGroup.innerHTML = '';
             legend.innerHTML = '';
             
-            let totalPct = 0;
             let cumulative = 0;
 
             Object.keys(selecionados).forEach(id => {
                 const pct = selecionados[id];
                 const item = alimentosInfo[id];
-                if (pct > 0.1) {
-                    const start = cumulative;
-                    const end = cumulative + (pct / 100);
-                    const x1 = 50 + Math.cos(2 * Math.PI * start) * 46;
-                    const y1 = 50 + Math.sin(2 * Math.PI * start) * 46;
-                    const x2 = 50 + Math.cos(2 * Math.PI * end) * 46;
-                    const y2 = 50 + Math.sin(2 * Math.PI * end) * 46;
-                    const largeArc = pct / 100 > 0.5 ? 1 : 0;
+                
+                const start = cumulative;
+                const end = cumulative + (pct / 100);
+                const x1 = 50 + Math.cos(2 * Math.PI * start) * 46;
+                const y1 = 50 + Math.sin(2 * Math.PI * start) * 46;
+                const x2 = 50 + Math.cos(2 * Math.PI * end) * 46;
+                const y2 = 50 + Math.sin(2 * Math.PI * end) * 46;
+                const largeArc = pct / 100 > 0.5 ? 1 : 0;
 
-                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    path.setAttribute("d", `M 50 50 L ${x1} ${y1} A 46 46 0 ${largeArc} 1 ${x2} ${y2} Z`);
-                    path.setAttribute("fill", item.color);
-                    path.setAttribute("class", "plate-slice");
-                    slicesGroup.appendChild(path);
-                    
-                    cumulative = end;
-                    totalPct += pct;
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M 50 50 L ${x1} ${y1} A 46 46 0 ${largeArc} 1 ${x2} ${y2} Z`);
+                path.setAttribute("fill", item.color);
+                path.setAttribute("stroke", "white");
+                path.setAttribute("stroke-width", "0.5");
+                slicesGroup.appendChild(path);
+                
+                cumulative = end;
 
-                    const leg = document.createElement('div');
-                    leg.className = "flex items-center gap-1.5 text-[9px] font-black uppercase px-2.5 py-1.5 rounded-full bg-white shadow-sm border border-slate-100";
-                    leg.innerHTML = `<span class="w-2 h-2 rounded-full" style="background:${item.color}"></span> ${item.nome}`;
-                    legend.appendChild(leg);
-                }
+                const leg = document.createElement('div');
+                leg.className = "px-3 py-1 bg-white rounded-full text-[10px] font-black uppercase shadow-sm border border-slate-100 flex items-center gap-2";
+                leg.innerHTML = `<div class="w-2 h-2 rounded-full" style="background:${item.color}"></div> ${item.nome}`;
+                legend.appendChild(leg);
             });
 
-            document.getElementById('total-pct-display').innerText = totalPct.toFixed(1) + "%";
             calcularImpacto();
         }
 
@@ -373,113 +372,73 @@
             let totalAgua = 0;
             let totalSolo = 0;
             
-            // v1.7: Aplica o multiplicador de correção para balanças descalibradas pela metade
+            // Correção de peso v1.7/1.8
             let pesoCorrigido = pesoReal * MULTIPLICADOR_CORRECAO;
-            
-            let pesoFiltrado = Math.abs(pesoCorrigido) < TOLERANCIA_GRAMAS ? 0 : pesoCorrigido;
-            pesoFiltrado += OFFSET_CORRECAO;
+            if (Math.abs(pesoCorrigido) < TOLERANCIA_GRAMAS) pesoCorrigido = 0;
 
-            document.getElementById('peso-display').innerText = Math.round(pesoFiltrado);
+            document.getElementById('peso-display').innerText = Math.round(pesoCorrigido);
 
             Object.keys(selecionados).forEach(id => {
-                const pesoParte = pesoFiltrado * (selecionados[id] / 100);
+                const pesoParte = pesoCorrigido * (selecionados[id] / 100);
                 totalAgua += pesoParte * alimentosInfo[id].agua;
                 totalSolo += pesoParte * alimentosInfo[id].solo;
             });
 
             document.getElementById('agua-display').innerText = Math.round(totalAgua);
             document.getElementById('solo-display').innerText = totalSolo.toFixed(2);
-            document.getElementById('bar-agua').style.width = Math.min(100, (totalAgua / 1200) * 100) + "%";
-            document.getElementById('bar-solo').style.width = Math.min(100, (totalSolo / 4) * 100) + "%";
-
-            const alertBox = document.getElementById('social-alert');
-            if (pesoFiltrado > 50 && totalAgua > 1) {
-                alertBox.classList.remove('hidden');
-                document.getElementById('alert-text').innerHTML = `Este desperdício equivale a gastar <b>${(totalAgua/20).toFixed(1)} banhos</b> de 5 min!`;
-            } else {
-                alertBox.classList.add('hidden');
-            }
+            document.getElementById('banhos-count').innerText = (totalAgua / 20).toFixed(1);
         }
 
         function resetPainel() {
             selecionados = {};
             renderSliders();
             atualizarVisual();
-            document.querySelectorAll('.food-card').forEach(c => c.classList.remove('selected', 'disabled'));
+            document.querySelectorAll('.food-card').forEach(c => c.classList.remove('selected'));
         }
 
-        async function enviarComando(cmd) {
-            if (writer) {
-                try {
-                    const data = new TextEncoder().encode(cmd + "\n");
-                    await writer.write(data);
-                } catch (e) {
-                    console.error("Erro ao enviar comando:", e);
-                }
-            }
-        }
-
-        document.getElementById('btn-tara').onclick = () => {
-            enviarComando("TARA");
-            const btn = document.getElementById('btn-tara');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "<span>✅</span> ZERADO!";
-            setTimeout(() => btn.innerHTML = originalText, 1000);
-        };
-
+        // --- CONEXÃO SERIAL ---
         document.getElementById('btn-conectar').onclick = async () => {
-            if (!navigator.serial) return alert("Por favor, use o Google Chrome ou Microsoft Edge no computador.");
+            if (!navigator.serial) {
+                return showMessage("O modo touch interativo completo requer um computador com Chrome para se conectar à balança via USB.");
+            }
             try {
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 9600 });
-                
                 writer = port.writable.getWriter();
                 
-                document.getElementById('status-serial').innerText = "🟢 Balança Conectada (v1.7)";
-                document.getElementById('status-serial').classList.replace('text-slate-400', 'text-green-600');
-                
+                document.getElementById('status-serial').innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500 pulse-conn"></span> Balança Ativa';
                 document.getElementById('btn-conectar').classList.add('hidden');
                 document.getElementById('btn-tara').classList.remove('hidden');
                 
                 lerSerial();
-            } catch (e) { 
-                console.error("Erro de conexão serial:", e);
-                document.getElementById('status-serial').innerText = "❌ Falha na conexão: " + e.message;
-                document.getElementById('status-serial').classList.replace('text-slate-400', 'text-red-500');
-            }
+            } catch (e) { console.error(e); }
+        };
+
+        document.getElementById('btn-tara').onclick = async () => {
+            if (writer) await writer.write(new TextEncoder().encode("TARA\n"));
         };
 
         async function lerSerial() {
             const decoder = new TextDecoder();
             let buffer = "";
-
             while (port && port.readable) {
                 const reader = port.readable.getReader();
                 try {
                     while (true) {
                         const { value, done } = await reader.read();
                         if (done) break;
-                        
                         buffer += decoder.decode(value);
-                        
                         if (buffer.includes('\n')) {
                             const linhas = buffer.split('\n');
-                            const ultimaLinhaValida = linhas[linhas.length - 2].trim();
-                            const pesoLimpo = ultimaLinhaValida.replace(/[^0-9.-]/g, '');
-                            
-                            if (pesoLimpo !== "" && !isNaN(pesoLimpo)) {
-                                pesoReal = parseFloat(pesoLimpo);
+                            const dado = linhas[linhas.length - 2].trim().replace(/[^0-9.-]/g, '');
+                            if (dado && !isNaN(dado)) {
+                                pesoReal = parseFloat(dado);
                                 calcularImpacto();
                             }
                             buffer = linhas[linhas.length - 1];
                         }
                     }
-                } catch (error) {
-                    console.error("Erro na leitura:", error);
-                    break;
-                } finally {
-                    reader.releaseLock();
-                }
+                } finally { reader.releaseLock(); }
             }
         }
     </script>
