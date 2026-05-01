@@ -121,11 +121,19 @@
             <p class="text-slate-500 font-medium italic">Simulador de Impacto Ambiental em Tempo Real</p>
             
             <div class="mt-4 flex flex-col items-center gap-2">
-                <button id="btn-conectar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all flex items-center gap-2">
-                    <span>🔌</span> CONECTAR BALANÇA (USB)
-                </button>
-                <div id="status-serial" class="conn-status text-xs text-slate-500 font-bold uppercase">
-                    Aguardando conexão Serial...
+                <!-- Botões de Controle Principal -->
+                <div class="flex items-center justify-center gap-3">
+                    <button id="btn-conectar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition-all flex items-center gap-2">
+                        <span>🔌</span> CONECTAR BALANÇA
+                    </button>
+                    
+                    <button id="btn-tara" class="hidden bg-slate-800 hover:bg-black text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition-all flex items-center gap-2 border-2 border-slate-700">
+                        <span>⚖️</span> TARA (ZERAR)
+                    </button>
+                </div>
+
+                <div id="status-serial" class="conn-status text-[10px] text-slate-400 font-black uppercase tracking-wider mt-1">
+                    Aguardando conexão via USB...
                 </div>
             </div>
         </header>
@@ -230,6 +238,7 @@
         let selecionados = {}; 
         let pesoReal = 0;
         let port = null;
+        let writer = null;
 
         const selector = document.getElementById('food-selector');
         Object.keys(alimentosInfo).forEach(id => {
@@ -387,19 +396,41 @@
             document.querySelectorAll('.food-card').forEach(c => c.classList.remove('selected', 'disabled'));
         }
 
-        // --- MELHORIA NA CONEXÃO SERIAL ---
+        async function enviarComando(cmd) {
+            if (writer) {
+                const data = new TextEncoder().encode(cmd + "\n");
+                await writer.write(data);
+            }
+        }
+
+        document.getElementById('btn-tara').onclick = () => {
+            enviarComando("TARA");
+            // Feedback visual rápido
+            const btn = document.getElementById('btn-tara');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "<span>✅</span> ZERADO!";
+            setTimeout(() => btn.innerHTML = originalText, 1000);
+        };
+
         document.getElementById('btn-conectar').onclick = async () => {
             if (!navigator.serial) return alert("Por favor, use o Google Chrome ou Microsoft Edge no computador.");
             try {
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 9600 });
-                document.getElementById('status-serial').innerText = "🟢 Balança Ativa (Recebendo dados)";
-                document.getElementById('status-serial').classList.add('text-green-600');
+                
+                writer = port.writable.getWriter();
+                
+                document.getElementById('status-serial').innerText = "🟢 Balança Conectada com Sucesso";
+                document.getElementById('status-serial').classList.replace('text-slate-400', 'text-green-600');
+                
                 document.getElementById('btn-conectar').classList.add('hidden');
+                document.getElementById('btn-tara').classList.remove('hidden');
+                
                 lerSerial();
             } catch (e) { 
                 console.error(e);
-                document.getElementById('status-serial').innerText = "❌ Erro ao conectar. Tente novamente.";
+                document.getElementById('status-serial').innerText = "❌ Falha na conexão serial";
+                document.getElementById('status-serial').classList.replace('text-slate-400', 'text-red-500');
             }
         };
 
@@ -414,25 +445,17 @@
                         const { value, done } = await reader.read();
                         if (done) break;
                         
-                        // Adiciona novos dados ao buffer
                         buffer += decoder.decode(value);
                         
-                        // Processa se houver uma quebra de linha
                         if (buffer.includes('\n')) {
                             const linhas = buffer.split('\n');
-                            // Pega a penúltima linha (a última completa antes do \n)
                             let ultimaLinhaValida = linhas[linhas.length - 2].trim();
-                            
-                            // Limpa caracteres não numéricos (como \r ou espaços)
-                            const pesoLimpo = ultimaLinhaValida.replace(/[^0-9.]/g, '');
+                            const pesoLimpo = ultimaLinhaValida.replace(/[^0-9.-]/g, '');
                             
                             if (pesoLimpo !== "" && !isNaN(pesoLimpo)) {
                                 pesoReal = parseFloat(pesoLimpo);
-                                // Debug visual opcional: console.log("Peso recebido:", pesoReal);
                                 calcularImpacto();
                             }
-                            
-                            // Mantém o resto no buffer
                             buffer = linhas[linhas.length - 1];
                         }
                     }
