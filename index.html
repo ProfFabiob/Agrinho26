@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O Peso do Desperdício - Agrinho 2026 - v1.5</title>
+    <title>O Peso do Desperdício - Agrinho 2026 - v1.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -115,7 +115,7 @@
     <div class="max-w-6xl mx-auto">
         <header class="text-center mb-8">
             <div class="flex justify-center mb-2">
-                <span class="version-badge shadow-sm">v1.5 - Edição Agrinho 2026</span>
+                <span class="version-badge shadow-sm">v1.6 - Edição Agrinho 2026</span>
             </div>
             <h1 class="text-3xl md:text-5xl font-bold text-slate-800 mb-2">🌱 O Peso do Desperdício</h1>
             <p class="text-slate-500 font-medium italic">Simulador de Impacto Ambiental em Tempo Real</p>
@@ -238,6 +238,10 @@
         let pesoReal = 0;
         let port = null;
         let writer = null;
+
+        // v1.6: Configuração de tolerância para descalibragem
+        const TOLERANCIA_GRAMAS = 5; // Ignora flutuações menores que 5g
+        const OFFSET_CORRECAO = 0;   // Ajuste manual se quiser somar/subtrair fixo
 
         const selector = document.getElementById('food-selector');
         Object.keys(alimentosInfo).forEach(id => {
@@ -366,10 +370,15 @@
         function calcularImpacto() {
             let totalAgua = 0;
             let totalSolo = 0;
-            document.getElementById('peso-display').innerText = Math.round(pesoReal);
+            
+            // v1.6: Aplica filtro de estabilidade para evitar flutuação visual
+            let pesoFiltrado = Math.abs(pesoReal) < TOLERANCIA_GRAMAS ? 0 : pesoReal;
+            pesoFiltrado += OFFSET_CORRECAO;
+
+            document.getElementById('peso-display').innerText = Math.round(pesoFiltrado);
 
             Object.keys(selecionados).forEach(id => {
-                const pesoParte = pesoReal * (selecionados[id] / 100);
+                const pesoParte = pesoFiltrado * (selecionados[id] / 100);
                 totalAgua += pesoParte * alimentosInfo[id].agua;
                 totalSolo += pesoParte * alimentosInfo[id].solo;
             });
@@ -380,7 +389,7 @@
             document.getElementById('bar-solo').style.width = Math.min(100, (totalSolo / 4) * 100) + "%";
 
             const alertBox = document.getElementById('social-alert');
-            if (pesoReal > 50 && totalAgua > 1) {
+            if (pesoFiltrado > 50 && totalAgua > 1) {
                 alertBox.classList.remove('hidden');
                 document.getElementById('alert-text').innerHTML = `Este desperdício equivale a gastar <b>${(totalAgua/20).toFixed(1)} banhos</b> de 5 min!`;
             } else {
@@ -422,7 +431,7 @@
                 
                 writer = port.writable.getWriter();
                 
-                document.getElementById('status-serial').innerText = "🟢 Balança Conectada (v1.5)";
+                document.getElementById('status-serial').innerText = "🟢 Balança Conectada (v1.6)";
                 document.getElementById('status-serial').classList.replace('text-slate-400', 'text-green-600');
                 
                 document.getElementById('btn-conectar').classList.add('hidden');
