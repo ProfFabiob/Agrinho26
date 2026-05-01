@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O Peso do Desperdício - Agrinho 2026 - v1.6</title>
+    <title>O Peso do Desperdício - Agrinho 2026 - v1.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -115,7 +115,7 @@
     <div class="max-w-6xl mx-auto">
         <header class="text-center mb-8">
             <div class="flex justify-center mb-2">
-                <span class="version-badge shadow-sm">v1.6 - Edição Agrinho 2026</span>
+                <span class="version-badge shadow-sm">v1.7 - Edição Agrinho 2026</span>
             </div>
             <h1 class="text-3xl md:text-5xl font-bold text-slate-800 mb-2">🌱 O Peso do Desperdício</h1>
             <p class="text-slate-500 font-medium italic">Simulador de Impacto Ambiental em Tempo Real</p>
@@ -239,9 +239,11 @@
         let port = null;
         let writer = null;
 
-        // v1.6: Configuração de tolerância para descalibragem
-        const TOLERANCIA_GRAMAS = 5; // Ignora flutuações menores que 5g
-        const OFFSET_CORRECAO = 0;   // Ajuste manual se quiser somar/subtrair fixo
+        // v1.7: AJUSTE DE CALIBRAGEM VIA SOFTWARE
+        // Se a balança marca a METADE do peso real, usamos o multiplicador 2.0
+        const MULTIPLICADOR_CORRECAO = 2.0; 
+        const TOLERANCIA_GRAMAS = 5; 
+        const OFFSET_CORRECAO = 0;
 
         const selector = document.getElementById('food-selector');
         Object.keys(alimentosInfo).forEach(id => {
@@ -371,8 +373,10 @@
             let totalAgua = 0;
             let totalSolo = 0;
             
-            // v1.6: Aplica filtro de estabilidade para evitar flutuação visual
-            let pesoFiltrado = Math.abs(pesoReal) < TOLERANCIA_GRAMAS ? 0 : pesoReal;
+            // v1.7: Aplica o multiplicador de correção para balanças descalibradas pela metade
+            let pesoCorrigido = pesoReal * MULTIPLICADOR_CORRECAO;
+            
+            let pesoFiltrado = Math.abs(pesoCorrigido) < TOLERANCIA_GRAMAS ? 0 : pesoCorrigido;
             pesoFiltrado += OFFSET_CORRECAO;
 
             document.getElementById('peso-display').innerText = Math.round(pesoFiltrado);
@@ -431,7 +435,7 @@
                 
                 writer = port.writable.getWriter();
                 
-                document.getElementById('status-serial').innerText = "🟢 Balança Conectada (v1.6)";
+                document.getElementById('status-serial').innerText = "🟢 Balança Conectada (v1.7)";
                 document.getElementById('status-serial').classList.replace('text-slate-400', 'text-green-600');
                 
                 document.getElementById('btn-conectar').classList.add('hidden');
