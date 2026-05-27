@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel da Balança - Agrinho 2026</title>
+    <title>Painel da Balança v2.2 - Agrinho 2026</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -47,7 +47,7 @@
             gap: 10px;
             margin-bottom: 30px;
             background-color: #f8f9fa;
-            padding: 10px;
+            padding: 12px;
             border-radius: 20px;
         }
 
@@ -95,6 +95,17 @@
         .btn-conectar:active {
             transform: scale(0.98);
         }
+
+        /* Mensagem de Ajuda Técnica */
+        .aviso-tecnico {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #e74c3c;
+            display: none;
+            background-color: #fdf2f2;
+            padding: 8px;
+            border-radius: 50px;
+        }
     </style>
 </head>
 <body>
@@ -111,100 +122,43 @@
         <div id="peso-display" class="display-peso">0.0 g</div>
 
         <button id="btn-conexao" class="btn-conectar" onclick="conectarBalanca()">Conectar Balança</button>
+        
+        <div id="alerta-porta" class="aviso-tecnico">⚠️ Feche o Monitor Serial da IDE do Arduino!</div>
     </div>
 
     <script>
-        let port;
-        let reader;
-        let decoderStream;
-        let inputStream;
+        let port = null;
+        let reader = null;
 
         async function conectarBalanca() {
-            // Se já estiver conectado, essa função evita abrir duplicado
-            if (port) {
-                alert("A balança já está em processo de conexão.");
+            // Verifica se o navegador suporta Web Serial
+            if (!("serial" in navigator)) {
+                alert("Este navegador não suporta conexão USB direta. Use o Google Chrome ou Edge.");
                 return;
             }
 
+            document.getElementById("alerta-porta").style.display = "none";
+
             try {
-                // 1. Solicita acesso à porta USB COM do Arduino
+                // 1. Solicita a porta COM ao usuário
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 9600 });
 
-                // 2. Atualiza a interface para o status Verde (Conectado)
-                document.getElementById("status-circulo").style.backgroundColor = "#2ecc71";
-                document.getElementById("status-texto").innerText = "Balança Conectada";
-                document.getElementById("status-texto").style.color = "#2ecc71";
-                document.getElementById("btn-conexao").style.display = "none"; // Esconde o botão após conectar
+                // 2. Atualiza interface para Conectado (Verde)
+                atualizarStatus("#2ecc71", "Balança Conectada");
+                document.getElementById("btn-conexao").style.display = "none"; 
 
-                // 3. Configura o decodificador de texto para ler o fluxo de dados
-                decoderStream = new TextDecoderStream();
-                port.readable.pipeTo(decoderStream.writable);
-                inputStream = decoderStream.readable;
+                // 3. Inicializa fluxos de leitura estáveis por linha
+                const textDecoderStream = new TextDecoderStream();
+                port.readable.pipeTo(textDecoderStream.writable);
+                const inputStream = textDecoderStream.readable;
                 
-                // Aplica o transformador de quebra de linha para receber strings inteiras (\r\n)
                 reader = inputStream
                     .pipeThrough(new TransformStream(new LineBreakTransformer()))
                     .getReader();
 
-                // 4. Loop infinito escutando os dados enviados pelo cabo USB
+                // 4. Loop contínuo de escuta
                 while (true) {
                     const { value, done } = await reader.read();
-                    if (done) {
-                        break; 
-                    }
-                    if (value) {
-                        processarDadosBalanca(value);
-                    }
-                }
-
-            } catch (error) {
-                console.error("Erro ao conectar na porta serial:", error);
-                // Reseta visual se o usuário cancelar ou der erro
-                document.getElementById("status-circulo").style.backgroundColor = "#e74c3c";
-                document.getElementById("status-texto").innerText = "Erro na conexão";
-                document.getElementById("status-texto").style.color = "#e74c3c";
-                port = null;
-            }
-        }
-
-        // --- PROCESSADOR DO JSON ENVIADO PELO ARDUINO ---
-        function processarDadosBalanca(linhaTexto) {
-            try {
-                const textoLimpo = linhaTexto.trim(); 
-                
-                // Converte a string JSON de volta para objeto JS
-                const dados = JSON.parse(textoLimpo);
-                
-                // Se o dado contiver o valor do peso, joga no display HTML
-                if (dados.peso !== undefined) {
-                    document.getElementById("peso-display").innerText = dados.peso.toFixed(1) + " g";
-                    
-                    // Integração Futura: Adicione aqui as funções que alteram o seu gráfico 
-                    // ou os cálculos de impacto financeiro do desperdício.
-                }
-            } catch (e) {
-                // Evita que erros de leitura inicial quebrem o carregamento da página
-                console.log("Sincronizando fluxo de dados...");
-            }
-        }
-
-        // --- FILTRO AUXILIAR DE LINHA (Agrupa os caracteres até achar o fim da linha) ---
-        class LineBreakTransformer {
-            constructor() {
-                this.container = "";
-            }
-            transform(chunk, controller) {
-                this.container += chunk;
-                // O Arduino Uno envia o divisor de linha padrão \r\n ao usar Serial.println
-                const lines = this.container.split("\r\n"); 
-                this.container = lines.pop();
-                lines.forEach(line => controller.enqueue(line));
-            }
-            flush(controller) {
-                controller.enqueue(this.container);
-            }
-        }
-    </script>
-</body>
-</html>
+                    if (done) break;
+                    if (value) process
