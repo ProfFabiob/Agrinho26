@@ -3,162 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel da Balança v2.2 - Agrinho 2026</title>
+    <title>Painel da Balança v2.2 - Agrinho</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f2f5;
             margin: 0;
-        }
-
-        .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            text-align: center;
-            max-width: 450px;
-            width: 100%;
-        }
-
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 24px;
-        }
-
-        .sub-titulo {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-bottom: 25px;
-        }
-
-        /* Indicador de Conexão */
-        .status-container {
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            background-color: #f8f9fa;
-            padding: 12px;
-            border-radius: 20px;
+            align-items: center;
+            min-height: 100vh;
         }
-
-        .circulo {
-            width: 15px;
-            height: 15px;
-            background-color: #95a5a6; /* Cinza inicial */
-            border-radius: 50%;
-            transition: background-color 0.3s ease;
+        .card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
         }
-
-        .texto-status {
-            font-weight: 600;
+        h1 {
+            color: #1a1a1a;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #666;
             font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .status-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8f9fa;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #7f8c8d;
+            border-radius: 50%;
+        }
+        .status-text {
+            font-size: 14px;
+            font-weight: 500;
             color: #7f8c8d;
         }
-
-        /* Display de Peso */
-        .display-peso {
+        .weight-display {
             font-size: 64px;
-            font-weight: bold;
+            font-weight: 700;
             color: #2c3e50;
             margin: 20px 0;
-            font-family: monospace;
         }
-
-        /* Botão de Conexão */
-        .btn-conectar {
-            background-color: #3498db;
+        .btn {
+            background-color: #007bff;
             color: white;
             border: none;
-            padding: 12px 28px;
+            padding: 12px 24px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+            transition: background 0.2s;
         }
-
-        .btn-conectar:hover {
-            background-color: #2980b9;
-        }
-
-        .btn-conectar:active {
-            transform: scale(0.98);
-        }
-
-        /* Mensagem de Ajuda Técnica */
-        .aviso-tecnico {
-            margin-top: 15px;
-            font-size: 12px;
-            color: #e74c3c;
-            display: none;
-            background-color: #fdf2f2;
-            padding: 8px;
-            border-radius: 50px;
+        .btn:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Balança Inteligente</h1>
-        <div class="sub-titulo">Simulador de Desperdício de Alimentos</div>
-
-        <div class="status-container">
-            <div id="status-circulo" class="circulo"></div>
-            <span id="status-texto" class="texto-status">Aguardando USB</span>
-        </div>
-
-        <div id="peso-display" class="display-peso">0.0 g</div>
-
-        <button id="btn-conexao" class="btn-conectar" onclick="conectarBalanca()">Conectar Balança</button>
-        
-        <div id="alerta-porta" class="aviso-tecnico">⚠️ Feche o Monitor Serial da IDE do Arduino!</div>
+<div class="card">
+    <h1>Balança Inteligente</h1>
+    <div class="subtitle">Simulador de Desperdício de Alimentos</div>
+    
+    <div class="status-box">
+        <div id="status-dot" class="status-dot"></div>
+        <span id="status-text" class="status-text">Aguardando USB</span>
     </div>
+    
+    <div id="weight" class="weight-display">0.0 g</div>
+    
+    <button id="btn-connect" class="btn" onclick="connectSerial()">Conectar Balança</button>
+</div>
 
-    <script>
-        let port = null;
-        let reader = null;
+<script>
+let port;
+let keepReading = true;
+let reader;
 
-        async function conectarBalanca() {
-            // Verifica se o navegador suporta Web Serial
-            if (!("serial" in navigator)) {
-                alert("Este navegador não suporta conexão USB direta. Use o Google Chrome ou Edge.");
-                return;
-            }
+async function connectSerial() {
+    try {
+        // Solicita a porta COM do Arduino
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 9600 });
+        
+        // Atualiza interface para Conectado (Verde)
+        document.getElementById('status-dot').style.backgroundColor = '#2ecc71';
+        document.getElementById('status-text').innerText = 'Balança Conectada';
+        document.getElementById('status-text').style.color = '#2ecc71';
+        document.getElementById('btn-connect').style.display = 'none';
 
-            document.getElementById("alerta-porta").style.display = "none";
+        const decoder = new TextDecoder();
+        let buffer = '';
 
+        // Loop de leitura contínuo v2.2
+        while (port.readable && keepReading) {
+            reader = port.readable.getReader();
             try {
-                // 1. Solicita a porta COM ao usuário
-                port = await navigator.serial.requestPort();
-                await port.open({ baudRate: 9600 });
-
-                // 2. Atualiza interface para Conectado (Verde)
-                atualizarStatus("#2ecc71", "Balança Conectada");
-                document.getElementById("btn-conexao").style.display = "none"; 
-
-                // 3. Inicializa fluxos de leitura estáveis por linha
-                const textDecoderStream = new TextDecoderStream();
-                port.readable.pipeTo(textDecoderStream.writable);
-                const inputStream = textDecoderStream.readable;
-                
-                reader = inputStream
-                    .pipeThrough(new TransformStream(new LineBreakTransformer()))
-                    .getReader();
-
-                // 4. Loop contínuo de escuta
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
-                    if (value) process
+                    
+                    // Transforma os bytes recebidos em texto e junta ao buffer
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    // Quebra o buffer pelas linhas completas (\n)
+                    let lines = buffer.split('\n');
+                    buffer = lines.pop(); // Mantém a linha incompleta no buffer para a próxima leitura
+                    
+                    for (let line of lines) {
+                        if (line.trim() !== '') {
+                            parseData(line);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Erro na leitura dos dados:", error);
+            } finally {
+                reader.releaseLock();
+            }
+        }
+    } catch (error) {
+        console.error("Erro ao conectar:", error);
+        document.getElementById('status-dot').style.backgroundColor = '#e74c3c';
+        document.getElementById('status-text').innerText = 'Erro na conexão';
+        document.getElementById('status-text').style.color = '#e74c3c';
+    }
+}
+
+function parseData(rawData) {
+    try {
+        // Limpa espaços e faz o parse do JSON enviado pelo Arduino v1.2
+        const cleanData = rawData.trim();
+        const json = JSON.parse(cleanData);
+        
+        if (json.peso !== undefined) {
+            let valorPeso = json.peso;
+            // Filtro para estabilizar pequenas oscilações perto de zero
+            if (valorPeso < 0.5 && valorPeso > -0.5) {
+                valorPeso = 0.0;
+            }
+            document.getElementById('weight').innerText = valorPeso.toFixed(1) + ' g';
+        }
+    } catch (e) {
+        // Ignora pacotes cortados da inicialização
+        console.log("Sincronizando dados...");
+    }
+}
+</script>
+
+</body>
+</html>
