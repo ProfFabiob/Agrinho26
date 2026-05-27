@@ -1,171 +1,439 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel da Balança v2.2 - Agrinho</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>O Peso do Desperdício - Agrinho 2026 - v2.2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Outfit', sans-serif;
+            background-color: #f0f4f8;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .card {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-        }
-        h1 {
-            color: #1a1a1a;
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
-        .status-box {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #f8f9fa;
-            padding: 8px 16px;
-            border-radius: 20px;
-            margin-bottom: 24px;
-        }
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            background-color: #7f8c8d;
-            border-radius: 50%;
-        }
-        .status-text {
-            font-size: 14px;
-            font-weight: 500;
-            color: #7f8c8d;
-        }
-        .weight-display {
-            font-size: 64px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 20px 0;
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 8px;
+
+        .food-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            transition: background 0.2s;
+            border: 2px solid transparent;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-width: 90px;
+            height: 100px;
         }
-        .btn:hover {
-            background-color: #0056b3;
+
+        .food-card:active {
+            transform: scale(0.95);
         }
+
+        .food-card.selected {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        .plate-container {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.1));
+        }
+
+        @media (min-width: 768px) {
+            .plate-container {
+                width: 300px;
+                height: 300px;
+            }
+        }
+
+        input[type=range] {
+            height: 8px;
+            border-radius: 99px;
+            background: #e2e8f0;
+            appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #22c55e;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+        }
+
+        .version-badge {
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 99px;
+            font-weight: 800;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .pulse-conn {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-6">
 
-<div class="card">
-    <h1>Balança Inteligente</h1>
-    <div class="subtitle">Simulador de Desperdício de Alimentos</div>
-    
-    <div class="status-box">
-        <div id="status-dot" class="status-dot"></div>
-        <span id="status-text" class="status-text">Aguardando USB</span>
+    <div class="app-container">
+        <!-- Cabeçalho -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <div class="text-center md:text-left">
+                <span class="version-badge uppercase mb-1 inline-block">Agrinho 2026 • v2.2</span>
+                <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">O Peso do <span class="text-green-600">Desperdício</span></h1>
+            </div>
+            
+            <div class="flex flex-row items-center gap-4">
+                <div id="status-serial" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mr-2">
+                    <span class="w-2 h-2 rounded-full bg-slate-300"></span> Aguardando USB
+                </div>
+                <button id="btn-conectar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95 text-sm">
+                    🔌 CONECTAR
+                </button>
+                <button id="btn-tara" class="hidden bg-slate-800 hover:bg-black text-white font-bold py-2 px-5 rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95 text-sm">
+                    ⚖️ ZERAR
+                </button>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Coluna Esquerda: Impacto -->
+            <div class="lg:col-span-3 order-2 lg:order-1 space-y-4">
+                <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-700 text-white">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-[10px] font-black uppercase opacity-80">Pegada Hídrica</span>
+                        <span class="text-xl">💧</span>
+                    </div>
+                    <div class="text-3xl font-black tabular-nums"><span id="agua-display">0</span><small class="text-sm font-medium opacity-70 ml-1">L</small></div>
+                    <p class="text-[10px] mt-1 opacity-80 font-medium">Equivale a <span id="banhos-count" class="font-bold">0</span> banhos.</p>
+                </div>
+
+                <div class="stat-card bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-[10px] font-black uppercase opacity-80">Uso de Terra</span>
+                        <span class="text-xl">🌍</span>
+                    </div>
+                    <div class="text-3xl font-black tabular-nums"><span id="solo-display">0.00</span><small class="text-sm font-medium opacity-70 ml-1">m²</small></div>
+                </div>
+
+                <div id="proportions-container" class="stat-card hidden border-t-4 border-green-500">
+                    <h2 class="text-sm font-black text-slate-800 mb-4 flex items-center gap-2 uppercase">
+                        <span>⚖️</span> Ajustar Prato
+                    </h2>
+                    <div id="sliders-list" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- Coluna Central: Gráfico e Alimentos -->
+            <div class="lg:col-span-9 order-1 lg:order-2 flex flex-col items-center space-y-6">
+                
+                <!-- Display de Peso -->
+                <div class="bg-white px-8 py-3 rounded-2xl shadow-lg border-b-4 border-green-500 text-center w-full max-w-xs">
+                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Peso na Balança</div>
+                    <div class="flex items-baseline justify-center">
+                        <span id="peso-display" class="text-5xl font-black text-slate-800 tabular-nums">0</span>
+                        <span class="text-xl font-bold text-slate-400 ml-1">g</span>
+                    </div>
+                </div>
+
+                <!-- Gráfico do Prato -->
+                <div class="plate-container">
+                    <svg id="plate-svg" viewBox="0 0 100 100" class="w-full h-full transform -rotate-90">
+                        <circle cx="50" cy="50" r="48" fill="#e2e8f0" opacity="0.3" />
+                        <circle cx="50" cy="50" r="46" class="plate-base" fill="white" stroke="#e2e8f0" stroke-width="1" />
+                        <g id="pizza-slices"></g>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-14 h-14 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-inner border border-white/50">
+                            <span class="text-xl">🍽️</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legenda do Prato -->
+                <div id="plate-legend" class="flex flex-wrap justify-center gap-2 px-4 min-h-[32px]"></div>
+
+                <!-- Grade de Alimentos Centralizada -->
+                <div class="w-full bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-4 px-2">
+                        <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest italic">Monte o seu prato abaixo:</h2>
+                        <button onclick="resetPainel()" class="text-[10px] font-bold text-red-500 flex items-center gap-1 hover:bg-red-50 px-3 py-1 rounded-lg transition-colors">
+                            <span>🗑️</span> LIMPAR TUDO
+                        </button>
+                    </div>
+                    
+                    <div id="food-selector" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3">
+                        <!-- Gerado via JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-    
-    <div id="weight" class="weight-display">0.0 g</div>
-    
-    <button id="btn-connect" class="btn" onclick="connectSerial()">Conectar Balança</button>
-</div>
 
-<script>
-let port;
-let keepReading = true;
-let reader;
+    <!-- Modal de Erro -->
+    <div id="error-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+            <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">⚠️</div>
+            <h3 class="text-2xl font-black text-slate-800 mb-2">Conectividade</h3>
+            <p class="text-slate-500 mb-8 text-sm leading-relaxed">Conecte a balança USB no Chrome/Edge para leitura em tempo real.</p>
+            <button onclick="document.getElementById('error-modal').classList.add('hidden')" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">OK</button>
+        </div>
+    </div>
 
-async function connectSerial() {
-    try {
-        // Solicita a porta COM do Arduino
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 9600 });
-        
-        // Atualiza interface para Conectado (Verde)
-        document.getElementById('status-dot').style.backgroundColor = '#2ecc71';
-        document.getElementById('status-text').innerText = 'Balança Conectada';
-        document.getElementById('status-text').style.color = '#2ecc71';
-        document.getElementById('btn-connect').style.display = 'none';
+    <script>
+        const alimentosInfo = {
+            carne: { nome: "Carne", icon: "🥩", agua: 15.4, solo: 0.027, color: "#ef4444" },
+            arroz: { nome: "Arroz", icon: "🍚", agua: 2.5, solo: 0.0015, color: "#94a3b8" },
+            feijao: { nome: "Feijão", icon: "🥘", agua: 4.2, solo: 0.0022, color: "#78350f" },
+            massa: { nome: "Massa", icon: "🍝", agua: 1.8, solo: 0.0012, color: "#eab308" },
+            polenta: { nome: "Polenta", icon: "🌽", agua: 1.2, solo: 0.0010, color: "#facc15" },
+            fruta_salada: { nome: "Frutas e Salada", icon: "🥗", agua: 0.6, solo: 0.0008, color: "#22c55e" },
+            batata: { nome: "Batata", icon: "🥔", agua: 0.3, solo: 0.0006, color: "#fbbf24" },
+            maionese: { nome: "Maionese", icon: "🥣", agua: 1.5, solo: 0.0009, color: "#fef3c7" },
+            suco: { nome: "Suco", icon: "🍹", agua: 0.8, solo: 0.0005, color: "#f97316" },
+            leite_iogurte: { nome: "Leite e Iogurte", icon: "🥛", agua: 6.0, solo: 0.0050, color: "#38bdf8" },
+            pao: { nome: "Pão", icon: "🍞", agua: 1.6, solo: 0.0011, color: "#d97706" },
+            bolo: { nome: "Bolo", icon: "🍰", agua: 2.1, solo: 0.0018, color: "#db2777" },
+            cereal_bolacha: { nome: "Cereal e Biscoito", icon: "🍪", agua: 1.9, solo: 0.0014, color: "#92400e" }
+        };
 
-        const decoder = new TextDecoder();
-        let buffer = '';
+        let selecionados = {}; 
+        let pesoReal = 0;
+        let port = null;
+        let writer = null;
 
-        // Loop de leitura contínuo v2.2
-        while (port.readable && keepReading) {
-            reader = port.readable.getReader();
+        const MULTIPLICADOR_CORRECAO = 2.0; 
+        const TOLERANCIA_GRAMAS = 3; 
+
+        const selector = document.getElementById('food-selector');
+        Object.keys(alimentosInfo).forEach(id => {
+            const item = alimentosInfo[id];
+            const div = document.createElement('div');
+            div.className = `food-card bg-slate-50 p-2 rounded-2xl border-2`;
+            div.id = `card-${id}`;
+            div.innerHTML = `
+                <div class="text-3xl mb-1">${item.icon}</div>
+                <div class="text-[8px] font-black uppercase text-slate-600 leading-tight px-1">${item.nome}</div>
+            `;
+            div.onclick = () => toggleAlimento(id);
+            selector.appendChild(div);
+        });
+
+        function toggleAlimento(id) {
+            if (selecionados[id] !== undefined) {
+                delete selecionados[id];
+                document.getElementById(`card-${id}`).classList.remove('selected');
+            } else {
+                const keys = Object.keys(selecionados);
+                const totalAtual = keys.reduce((a, b) => a + (selecionados[b] || 0), 0);
+                const restante = 100 - totalAtual;
+                if (restante <= 1) return;
+                
+                selecionados[id] = Math.min(25, restante); 
+                document.getElementById(`card-${id}`).classList.add('selected');
+            }
+            renderSliders();
+            atualizarVisual();
+        }
+
+        function renderSliders() {
+            const container = document.getElementById('proportions-container');
+            const list = document.getElementById('sliders-list');
+            const keys = Object.keys(selecionados);
+
+            if (keys.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            keys.forEach(id => {
+                let sliderWrap = document.getElementById(`wrap-${id}`);
+                const item = alimentosInfo[id];
+                
+                const totalAtual = Object.keys(selecionados).reduce((acc, k) => acc + selecionados[k], 0);
+                const outrosTotal = totalAtual - selecionados[id];
+                const maxPermitido = 100 - outrosTotal;
+
+                if (!sliderWrap) {
+                    sliderWrap = document.createElement('div');
+                    sliderWrap.id = `wrap-${id}`;
+                    sliderWrap.className = "space-y-1";
+                    list.appendChild(sliderWrap);
+                }
+
+                sliderWrap.innerHTML = `
+                    <div class="flex justify-between text-[9px] font-black uppercase">
+                        <span class="text-slate-400 truncate pr-2">${item.nome}</span>
+                        <span class="text-green-600">${Math.round(selecionados[id])}%</span>
+                    </div>
+                    <input type="range" min="1" max="${maxPermitido}" step="1" value="${selecionados[id]}" 
+                        class="w-full" oninput="updateProportion('${id}', this.value)">
+                `;
+            });
+
+            Array.from(list.children).forEach(child => {
+                const childId = child.id.replace('wrap-', '');
+                if (!selecionados[childId]) child.remove();
+            });
+        }
+
+        function updateProportion(id, val) {
+            selecionados[id] = parseInt(val);
+            atualizarVisual();
+        }
+
+        function atualizarVisual() {
+            const slicesGroup = document.getElementById('pizza-slices');
+            const legend = document.getElementById('plate-legend');
+            slicesGroup.innerHTML = '';
+            legend.innerHTML = '';
+            
+            let cumulative = 0;
+
+            Object.keys(selecionados).forEach(id => {
+                const pct = selecionados[id];
+                const item = alimentosInfo[id];
+                const start = cumulative;
+                const end = cumulative + (pct / 100);
+                
+                const x1 = 50 + Math.cos(2 * Math.PI * start) * 46;
+                const y1 = 50 + Math.sin(2 * Math.PI * start) * 46;
+                const x2 = 50 + Math.cos(2 * Math.PI * end) * 46;
+                const y2 = 50 + Math.sin(2 * Math.PI * end) * 46;
+                const largeArc = pct / 100 > 0.5 ? 1 : 0;
+
+                if (pct > 0) {
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", `M 50 50 L ${x1} ${y1} A 46 46 0 ${largeArc} 1 ${x2} ${y2} Z`);
+                    path.setAttribute("fill", item.color);
+                    path.setAttribute("stroke", "white");
+                    path.setAttribute("stroke-width", "0.5");
+                    slicesGroup.appendChild(path);
+                }
+                
+                cumulative = end;
+
+                const leg = document.createElement('div');
+                leg.className = "px-3 py-1 bg-white rounded-full text-[9px] font-black uppercase shadow-sm border border-slate-100 flex items-center gap-1.5";
+                leg.innerHTML = `<div class="w-1.5 h-1.5 rounded-full" style="background:${item.color}"></div> ${item.nome}`;
+                legend.appendChild(leg);
+            });
+
+            calcularImpacto();
+        }
+
+        function calcularImpacto() {
+            let totalAgua = 0;
+            let totalSolo = 0;
+            let pesoCorrigido = pesoReal * MULTIPLICADOR_CORRECAO;
+            if (Math.abs(pesoCorrigido) < TOLERANCIA_GRAMAS) pesoCorrigido = 0;
+
+            document.getElementById('peso-display').innerText = Math.round(pesoCorrigido);
+
+            Object.keys(selecionados).forEach(id => {
+                const pesoParte = pesoCorrigido * (selecionados[id] / 100);
+                totalAgua += pesoParte * (alimentosInfo[id].agua || 0);
+                totalSolo += pesoParte * (alimentosInfo[id].solo || 0);
+            });
+
+            document.getElementById('agua-display').innerText = Math.round(totalAgua);
+            document.getElementById('solo-display').innerText = totalSolo.toFixed(2);
+            document.getElementById('banhos-count').innerText = (totalAgua / 20).toFixed(1);
+        }
+
+        function resetPainel() {
+            selecionados = {};
+            renderSliders();
+            atualizarVisual();
+            document.querySelectorAll('.food-card').forEach(c => c.classList.remove('selected'));
+        }
+
+        // Serial
+        document.getElementById('btn-conectar').onclick = async () => {
+            if (!navigator.serial) {
+                document.getElementById('error-modal').classList.remove('hidden');
+                return;
+            }
             try {
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    
-                    // Transforma os bytes recebidos em texto e junta ao buffer
-                    buffer += decoder.decode(value, { stream: true });
-                    
-                    // Quebra o buffer pelas linhas completas (\n)
-                    let lines = buffer.split('\n');
-                    buffer = lines.pop(); // Mantém a linha incompleta no buffer para a próxima leitura
-                    
-                    for (let line of lines) {
-                        if (line.trim() !== '') {
-                            parseData(line);
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 9600 });
+                writer = port.writable.getWriter();
+                document.getElementById('status-serial').innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500 pulse-conn"></span> Balança v2.2 Ativa';
+                document.getElementById('btn-conectar').classList.add('hidden');
+                document.getElementById('btn-tara').classList.remove('hidden');
+                lerSerial();
+            } catch (e) { console.error(e); }
+        };
+
+        document.getElementById('btn-tara').onclick = async () => {
+            if (writer) await writer.write(new TextEncoder().encode("TARA\n"));
+        };
+
+        async function lerSerial() {
+            const decoder = new TextDecoder();
+            let buffer = "";
+            while (port && port.readable) {
+                const reader = port.readable.getReader();
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value);
+                        if (buffer.includes('\n')) {
+                            const linhas = buffer.split('\n');
+                            const dado = linhas[linhas.length - 2].trim().replace(/[^0-9.-]/g, '');
+                            if (dado && !isNaN(dado)) {
+                                pesoReal = parseFloat(dado);
+                                calcularImpacto();
+                            }
+                            buffer = linhas[linhas.length - 1];
                         }
                     }
-                }
-            } catch (error) {
-                console.error("Erro na leitura dos dados:", error);
-            } finally {
-                reader.releaseLock();
+                } finally { reader.releaseLock(); }
             }
         }
-    } catch (error) {
-        console.error("Erro ao conectar:", error);
-        document.getElementById('status-dot').style.backgroundColor = '#e74c3c';
-        document.getElementById('status-text').innerText = 'Erro na conexão';
-        document.getElementById('status-text').style.color = '#e74c3c';
-    }
-}
-
-function parseData(rawData) {
-    try {
-        // Limpa espaços e faz o parse do JSON enviado pelo Arduino v1.2
-        const cleanData = rawData.trim();
-        const json = JSON.parse(cleanData);
-        
-        if (json.peso !== undefined) {
-            let valorPeso = json.peso;
-            // Filtro para estabilizar pequenas oscilações perto de zero
-            if (valorPeso < 0.5 && valorPeso > -0.5) {
-                valorPeso = 0.0;
-            }
-            document.getElementById('weight').innerText = valorPeso.toFixed(1) + ' g';
-        }
-    } catch (e) {
-        // Ignora pacotes cortados da inicialização
-        console.log("Sincronizando dados...");
-    }
-}
-</script>
-
+    </script>
 </body>
 </html>
